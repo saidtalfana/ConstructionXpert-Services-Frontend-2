@@ -1,0 +1,135 @@
+version: '3.8'
+services:
+  # Service de découverte Eureka
+  discovery-service:
+    image: oussamacharafi/discovery-service:latest
+    ports:
+      - "8761:8761"  # Port du service Eureka Discovery
+    networks:
+      - microservices-net
+
+  # Service de passerelle (Gateway)
+  gateway-service:
+    image: oussamacharafi/gateway-service:latest
+    ports:
+      - "8888:8888"  # Port de la passerelle
+    depends_on:
+      - discovery-service
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
+    networks:
+      - microservices-net
+
+  # Service de gestion de projets
+  project-service:
+    image: oussamacharafi/project-service:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://projetdb:3306/construction_project
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+    depends_on:
+      - discovery-service
+      - projetdb
+    networks:
+      - microservices-net
+
+  # Service de gestion des tâches
+  tache-service:
+    image: oussamacharafi/task-service:latest
+    ports:
+      - "8082:8082"
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://tachedb:3306/construction_task
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+    depends_on:
+      - discovery-service
+      - tachedb
+    networks:
+      - microservices-net
+
+  # Service de gestion des ressources
+  resource-service:
+    image: oussamacharafi/resource-service:latest
+    ports:
+      - "8083:8083"
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://ressourcedb:3306/construction_resource
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+    depends_on:
+      - discovery-service
+      - ressourcedb
+    networks:
+      - microservices-net
+
+  # Service utilisateur
+  user-service:
+    image: oussamacharafi/user-service:latest
+    ports:
+      - "8087:8087"
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://userdb:3306/construction_user
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+    depends_on:
+      - discovery-service
+      - userdb
+    networks:
+      - microservices-net
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  # Bases de données pour chaque service
+  projetdb:
+    image: "mysql:latest"
+    environment:
+      MYSQL_DATABASE: construction_project
+    volumes:
+      - projet-db:/var/lib/mysql
+    networks:
+      - microservices-net
+
+  ressourcedb:
+    image: "mysql:latest"
+    environment:
+      MYSQL_DATABASE: construction_resource
+    volumes:
+      - ressource-db:/var/lib/mysql
+    networks:
+      - microservices-net
+
+  tachedb:
+    image: "mysql:latest"
+    environment:
+      MYSQL_DATABASE: construction_task
+    volumes:
+      - tache-db:/var/lib/mysql
+    networks:
+      - microservices-net
+
+  userdb:
+    image: "mysql:latest"
+    environment:
+      MYSQL_DATABASE: construction_user
+    volumes:
+      - user-db:/var/lib/mysql
+    networks:
+      - microservices-net
+
+volumes:
+  projet-db:
+  ressource-db:
+  tache-db:
+  user-db:
+
+networks:
+  microservices-net:
+    driver: bridge

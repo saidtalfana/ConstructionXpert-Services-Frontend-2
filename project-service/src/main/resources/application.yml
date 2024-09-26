@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: project-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/construction_project?createDatabaseIfNotExist=True
+    username: root
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
+server:
+  port: 8081
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
